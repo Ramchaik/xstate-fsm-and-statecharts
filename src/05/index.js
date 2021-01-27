@@ -1,10 +1,48 @@
-import { createMachine, assign, interpret } from 'xstate';
+import { createMachine, assign, interpret } from "xstate";
 
-const elBox = document.querySelector('#box');
+const elBox = document.querySelector("#box");
 const elBody = document.body;
 
+const intializeX = (_, event) => event.clientX;
+const intializeY = (_, event) => event.clientY;
+const updateDeltaX = (context, event) => event.clientX - context.px;
+const updateDeltaY = (context, event) => event.clientY - context.py;
+const finalizeX = (context, _) => context.x + context.dx;
+const finalizeY = (context, _) => context.y + context.dy;
+
+const initalize = () => ({
+  px: intializeX,
+  py: intializeY,
+});
+
+const updateDelta = () => ({
+  dx: updateDeltaX,
+  dy: updateDeltaY,
+});
+
+const finalize = () => ({
+  x: finalizeX,
+  y: finalizeY,
+  dx: 0,
+  dy: 0,
+  px: 0,
+  py: 0,
+});
+
+const init = () => assign(initalize());
+const update = () => assign(updateDelta());
+const fin = () => assign(finalize());
+
+const cleanup = () =>
+  assign({
+    dx: 0,
+    dy: 0,
+    px: 0,
+    py: 0,
+  });
+
 const machine = createMachine({
-  initial: 'idle',
+  initial: "idle",
   // Set the initial context
   // Clue: {
   //   x: 0,
@@ -14,14 +52,22 @@ const machine = createMachine({
   //   px: 0,
   //   py: 0,
   // }
-  // context: ...,
+  context: {
+    x: 0,
+    y: 0,
+    dx: 0,
+    dy: 0,
+    px: 0,
+    py: 0,
+  },
   states: {
     idle: {
       on: {
         mousedown: {
           // Assign the point
           // ...
-          target: 'dragging',
+          target: "dragging",
+          actions: init(),
         },
       },
     },
@@ -31,10 +77,16 @@ const machine = createMachine({
           // Assign the delta
           // ...
           // (no target!)
+          actions: update(),
         },
         mouseup: {
           // Assign the position
-          target: 'idle',
+          target: "idle",
+          actions: fin(),
+        },
+        keyup: {
+          target: "idle",
+          actions: cleanup(),
         },
       },
     },
@@ -49,10 +101,10 @@ service.onTransition((state) => {
 
     elBox.dataset.state = state.value;
 
-    elBox.style.setProperty('--dx', state.context.dx);
-    elBox.style.setProperty('--dy', state.context.dy);
-    elBox.style.setProperty('--x', state.context.x);
-    elBox.style.setProperty('--y', state.context.y);
+    elBox.style.setProperty("--dx", state.context.dx);
+    elBox.style.setProperty("--dy", state.context.dy);
+    elBox.style.setProperty("--x", state.context.x);
+    elBox.style.setProperty("--y", state.context.y);
   }
 });
 
@@ -62,3 +114,12 @@ service.start();
 // - mousedown on elBox
 // - mousemove on elBody
 // - mouseup on elBody
+
+elBox.addEventListener("mousedown", service.send);
+elBox.addEventListener("mousemove", service.send);
+elBox.addEventListener("mouseup", service.send);
+document.body.addEventListener("keyup", (e) => {
+  if (e.key == "Escape") {
+    service.send(e);
+  }
+});
