@@ -1,6 +1,6 @@
-# Frontend Masters XState Workshop
+# XState Workshop
 
-Welcome to the [Frontend Masters](https://frontendmasters.com/) workshop on **JavaScript State Machines and Statecharts with XState**. In this workshop, you will:
+Welcome to the workshop on **JavaScript State Machines and Statecharts with XState**. In this workshop, you will:
 
 - Learn fundamental computer science principles
 - Represent complex logic clearly
